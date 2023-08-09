@@ -15,17 +15,23 @@ function UsersTable({ users: tempUsers }: any) {
 
   const redirectIfBlocked = async () => {
     const res = await fetch("/api/auth/user");
+    const { user } = await res.json();
     if (res.ok) {
-      const { user } = await res.json();
       if (user.status === "blocked") {
         await signOut();
       } else {
-        return true;
+        return {
+          isActive: true,
+          id: user.id,
+        };
       }
     } else {
       setError("Your Status is undefined!");
     }
-    return false;
+    return {
+      isActive: false,
+      id: user.id,
+    };
   };
 
   const selectUser = (event: any, userId: string) => {
@@ -49,8 +55,8 @@ function UsersTable({ users: tempUsers }: any) {
   };
   const deleteSelectedUsers = async () => {
     setLoading(true);
-    let isActive = await redirectIfBlocked();
-    if (!isActive) return;
+    let user = await redirectIfBlocked();
+    if (!user.isActive) return;
     const res = await fetch("/api/users/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -60,16 +66,22 @@ function UsersTable({ users: tempUsers }: any) {
       setUsers((prevUsers: any) =>
         prevUsers.filter((user: any) => !selectedUsers.includes(user.id))
       );
-      setSelectedUsers([]);
+      // if selected users includes the current user, sign out
+      if (selectedUsers.includes(user.id)) {
+        await signOut();
+      } else {
+        setSelectedUsers([]);
+        setLoading(false);
+      }
     } else {
       setError("Error deleting users!");
+      setLoading(false);
     }
-    setLoading(false);
   };
   const blockSelectedUsers = async () => {
     setLoading(true);
-    let isActive = await redirectIfBlocked();
-    if (!isActive) return;
+    let user = await redirectIfBlocked();
+    if (!user.isActive) return;
     const res = await fetch("/api/users/block", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -84,16 +96,22 @@ function UsersTable({ users: tempUsers }: any) {
           return user;
         })
       );
-      setSelectedUsers([]);
+      // if selected users includes the current user, sign out
+      if (selectedUsers.includes(user.id)) {
+        await signOut();
+      } else {
+        setSelectedUsers([]);
+        setLoading(false);
+      }
     } else {
       setError("Error blocking users!");
+      setLoading(false);
     }
-    setLoading(false);
   };
   const unblockSelectedUsers = async () => {
     setLoading(true);
-    let isActive = await redirectIfBlocked();
-    if (!isActive) return;
+    let user = await redirectIfBlocked();
+    if (!user.isActive) return;
     const res = await fetch("/api/users/unblock", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
