@@ -49,7 +49,6 @@ const RegisterForm = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(values),
       });
-      console.log(res);
       if (!res.ok) {
         const error = await res.json();
         throw new Error(error.message);
